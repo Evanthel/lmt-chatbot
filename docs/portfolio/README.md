@@ -5,6 +5,7 @@ This folder is the portfolio evidence pack for Xenophon: architecture flow, Comp
 ## What Is Ready
 
 - Flow diagram: [flow.mmd](flow.mmd)
+- Social and portfolio cover: [xenophon-cover.png](xenophon-cover.png) ([SVG source](xenophon-cover.svg))
 - Compare-mode preview: [compare-mode-preview.svg](compare-mode-preview.svg)
 - Live Compare-mode screenshot: [screenshots/compare-mode-deep-learning.png](screenshots/compare-mode-deep-learning.png)
 - Live Compare-mode screenshot: [screenshots/compare-mode-dropout.png](screenshots/compare-mode-dropout.png)

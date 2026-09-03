@@ -1,6 +1,7 @@
 import { DEFAULTS, KEYS, SAMPLING_LOCKED, SAMPLING_PRESETS, XENOPHON_PROMPT, WRAP, estimateCost, formatCost } from "./config.js";
 import { callOpenRouter, callRagChat } from "./api.js";
 import { renderMarkdown } from "./render.js";
+import { SAMPLE_RUN } from "./sample-run.js";
 import { createConversationState, resetConversationState, setOrClear } from "./state.js";
 
 const drawer = document.getElementById("drawer");
@@ -38,6 +39,7 @@ const statOut = document.getElementById("stat-out");
 const statCost = document.getElementById("stat-cost");
 const statCached = document.getElementById("stat-cached");
 const statCachedSep = document.getElementById("stat-cached-sep");
+const sampleTopbar = document.getElementById("sample-topbar");
 const downloadSimpleBtn = document.getElementById("download-simple");
 const downloadDetailedBtn = document.getElementById("download-detailed");
 const clearBtn = document.getElementById("clear");
@@ -168,6 +170,7 @@ applySamplingLock();
 function setMenu(open) {
   document.body.dataset.menu = open ? "open" : "closed";
   drawer.setAttribute("aria-hidden", open ? "false" : "true");
+  drawer.inert = !open;
 }
 menuToggle.addEventListener("click", () => setMenu(document.body.dataset.menu !== "open"));
 drawerClose.addEventListener("click", () => setMenu(false));
@@ -191,11 +194,11 @@ document.addEventListener("keydown", (e) => {
   if (e.key === "Escape" && document.body.dataset.menu === "open") setMenu(false);
 });
 
-// On desktop the drawer is a persistent sidebar, so default to open.
-// On narrower screens it's a modal overlay, so default closed unless
-// the user hasn't set an API key yet (in which case guide them to it).
+// On desktop the drawer is a persistent sidebar. On narrower screens,
+// surface the empty state first so visitors without a key can start the
+// local sample playback instead of landing behind the settings overlay.
 const isWide = window.matchMedia("(min-width: 900px)").matches;
-setMenu(isWide || !keyInput.value);
+setMenu(isWide);
 
 // Drawer resize: drag the right edge to change sidebar width. Persisted
 // in sessionStorage so it survives reloads within the same tab.
@@ -723,12 +726,307 @@ clearBtn.addEventListener("click", () => {
   resetConversation();
 });
 
+const samplePlayback = {
+  active: false,
+  paused: false,
+  currentStep: -1,
+  timer: null,
+  header: null,
+  comparison: null,
+};
+
+chatEl.addEventListener("click", (event) => {
+  if (event.target.closest("#view-sample-run")) {
+    startSampleRun();
+    return;
+  }
+  const action = event.target.closest("[data-sample-action]")?.dataset.sampleAction;
+  if (action === "pause") toggleSamplePause();
+  if (action === "skip") completeSampleRun();
+  if (action === "restart") startSampleRun();
+  if (action === "exit") resetConversation();
+  if (action === "configure") {
+    resetConversation();
+    setMenu(true);
+  }
+});
+
+function startSampleRun() {
+  stopSamplePlayback();
+  resetConversationState(state);
+  samplePlayback.active = true;
+  samplePlayback.currentStep = -1;
+  document.body.dataset.sampleRun = "playing";
+  sampleTopbar.hidden = false;
+  input.disabled = true;
+  input.placeholder = "Sample playback is read-only";
+  sendBtn.disabled = true;
+  setMenu(false);
+  renderSampleShell();
+  refreshToolbar();
+
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    completeSampleRun();
+    return;
+  }
+  scheduleSampleStep(280);
+}
+
+function stopSamplePlayback() {
+  if (samplePlayback.timer) window.clearTimeout(samplePlayback.timer);
+  samplePlayback.timer = null;
+  samplePlayback.active = false;
+  samplePlayback.paused = false;
+  samplePlayback.currentStep = -1;
+  samplePlayback.header = null;
+  samplePlayback.comparison = null;
+  delete document.body.dataset.sampleRun;
+  sampleTopbar.hidden = true;
+  input.disabled = false;
+  input.placeholder = "Ask anything...";
+  sendBtn.disabled = false;
+}
+
+function scheduleSampleStep(delay = 820) {
+  if (!samplePlayback.active || samplePlayback.paused) return;
+  samplePlayback.timer = window.setTimeout(() => {
+    samplePlayback.timer = null;
+    revealNextSampleStep();
+  }, delay);
+}
+
+function revealNextSampleStep({ schedule = true } = {}) {
+  if (!samplePlayback.active) return;
+  const nextStep = samplePlayback.currentStep + 1;
+  if (nextStep >= SAMPLE_RUN.steps.length) {
+    finishSampleRun();
+    return;
+  }
+  samplePlayback.currentStep = nextStep;
+  renderSampleStage(nextStep);
+  updateSampleProgress();
+  chatEl.scrollTo({ top: chatEl.scrollHeight, behavior: "smooth" });
+  if (nextStep === SAMPLE_RUN.steps.length - 1) {
+    finishSampleRun();
+  } else if (schedule) {
+    scheduleSampleStep(nextStep === 2 ? 1050 : 820);
+  }
+}
+
+function toggleSamplePause() {
+  if (!samplePlayback.active || samplePlayback.currentStep === SAMPLE_RUN.steps.length - 1) return;
+  samplePlayback.paused = !samplePlayback.paused;
+  if (samplePlayback.timer) window.clearTimeout(samplePlayback.timer);
+  samplePlayback.timer = null;
+  const button = samplePlayback.header?.querySelector('[data-sample-action="pause"]');
+  if (button) button.textContent = samplePlayback.paused ? "Resume" : "Pause";
+  updateSampleProgress();
+  if (!samplePlayback.paused) scheduleSampleStep(350);
+}
+
+function completeSampleRun() {
+  if (!samplePlayback.active) return;
+  if (samplePlayback.timer) window.clearTimeout(samplePlayback.timer);
+  samplePlayback.timer = null;
+  while (samplePlayback.currentStep < SAMPLE_RUN.steps.length - 1) {
+    revealNextSampleStep({ schedule: false });
+  }
+  finishSampleRun();
+}
+
+function finishSampleRun() {
+  if (!samplePlayback.active) return;
+  document.body.dataset.sampleRun = "complete";
+  samplePlayback.paused = false;
+  const pauseButton = samplePlayback.header?.querySelector('[data-sample-action="pause"]');
+  const skipButton = samplePlayback.header?.querySelector('[data-sample-action="skip"]');
+  if (pauseButton) pauseButton.hidden = true;
+  if (skipButton) skipButton.hidden = true;
+  updateSampleProgress();
+}
+
+function renderSampleShell() {
+  const recordedDate = new Intl.DateTimeFormat("en", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  }).format(new Date(SAMPLE_RUN.recorded_at));
+  chatEl.innerHTML = `
+    <section class="sample-run-header sample-reveal" aria-labelledby="sample-run-title">
+      <div class="sample-run-heading">
+        <div>
+          <div class="sample-eyebrow">Recorded benchmark · ${recordedDate}</div>
+          <h1 id="sample-run-title">Sample Compare run</h1>
+          <p>A real saved result, replayed without contacting OpenRouter or Supabase.</p>
+        </div>
+        <div class="sample-controls" role="group" aria-label="Sample playback controls">
+          <button type="button" data-sample-action="pause">Pause</button>
+          <button type="button" data-sample-action="skip">Show all</button>
+          <button type="button" data-sample-action="restart">Restart</button>
+          <button type="button" data-sample-action="exit">Exit</button>
+        </div>
+      </div>
+      <div class="sample-progress" role="progressbar" aria-label="Sample playback progress" aria-valuemin="0" aria-valuemax="${SAMPLE_RUN.steps.length}" aria-valuenow="0">
+        <span></span>
+      </div>
+      <ol class="sample-stage-list">
+        ${SAMPLE_RUN.steps.map((step) => `<li data-sample-step="${step.id}">${step.label}</li>`).join("")}
+      </ol>
+      <div class="sample-status" aria-live="polite">Preparing recorded run…</div>
+    </section>
+  `;
+  samplePlayback.header = chatEl.querySelector(".sample-run-header");
+}
+
+function updateSampleProgress() {
+  if (!samplePlayback.header) return;
+  const completed = samplePlayback.currentStep + 1;
+  const progress = samplePlayback.header.querySelector(".sample-progress");
+  progress.setAttribute("aria-valuenow", String(Math.max(0, completed)));
+  progress.style.setProperty(
+    "--sample-progress",
+    `${Math.max(0, completed) / SAMPLE_RUN.steps.length * 100}%`,
+  );
+  samplePlayback.header.querySelectorAll(".sample-stage-list li").forEach((item, index) => {
+    item.dataset.status = index < samplePlayback.currentStep
+      ? "done"
+      : index === samplePlayback.currentStep
+        ? "active"
+        : "pending";
+  });
+  const status = samplePlayback.header.querySelector(".sample-status");
+  if (samplePlayback.currentStep === SAMPLE_RUN.steps.length - 1) {
+    status.textContent = "Playback complete · this run used no API calls";
+  } else if (samplePlayback.paused) {
+    status.textContent = `Paused after ${SAMPLE_RUN.steps[samplePlayback.currentStep]?.label || "start"}`;
+  } else if (samplePlayback.currentStep >= 0) {
+    status.textContent = `${SAMPLE_RUN.steps[samplePlayback.currentStep].label} loaded`;
+  }
+}
+
+function renderSampleStage(index) {
+  const sampleCase = SAMPLE_RUN.case;
+  if (index === 0) {
+    const prompt = addMessage("user", sampleCase.question);
+    prompt.bubble.classList.add("sample-reveal");
+    const note = document.createElement("div");
+    note.className = "msg-meta user sample-reveal";
+    note.textContent = `${sampleCase.id} · ${sampleCase.category} · fixed evaluation prompt`;
+    prompt.wrap.appendChild(note);
+    return;
+  }
+  if (index === 1) {
+    const comparison = document.createElement("div");
+    comparison.className = "compare-block sample-reveal";
+    const grid = document.createElement("div");
+    grid.className = "compare-grid";
+    const standardCard = buildCompareCard(
+      "No RAG",
+      sampleCase.standard.reply,
+      sampleCase.standard.usage,
+      false,
+      SAMPLE_RUN.model,
+    );
+    appendSampleLatency(standardCard, sampleCase.standard.latency_ms);
+    grid.appendChild(standardCard);
+    const pendingCard = document.createElement("section");
+    pendingCard.className = "compare-card rag sample-pending-card";
+    pendingCard.innerHTML = '<div class="compare-label rag">RAG</div><div class="sample-pending-copy"><span class="sample-pulse"></span>Waiting for retrieval</div>';
+    grid.appendChild(pendingCard);
+    comparison.appendChild(grid);
+    chatEl.appendChild(comparison);
+    samplePlayback.comparison = comparison;
+    return;
+  }
+  if (index === 2) {
+    const pendingCard = samplePlayback.comparison?.querySelector(".sample-pending-card");
+    if (!pendingCard) return;
+    pendingCard.innerHTML = `
+      <div class="compare-label rag">RAG · retrieving</div>
+      <div class="sample-retrieval-count">${sampleCase.metrics.retrieved_count} chunks matched</div>
+      <ol class="sample-match-list">
+        ${sampleCase.rag.sources.slice(0, 3).map((source) => `<li><span>${source.citation}</span><strong>${source.similarity.toFixed(2)}</strong></li>`).join("")}
+      </ol>
+    `;
+    pendingCard.classList.add("sample-reveal");
+    return;
+  }
+  if (index === 3) {
+    const pendingCard = samplePlayback.comparison?.querySelector(".sample-pending-card");
+    if (!pendingCard) return;
+    const ragCard = buildCompareCard(
+      "RAG",
+      sampleCase.rag.reply,
+      sampleCase.rag.usage,
+      true,
+      SAMPLE_RUN.model,
+    );
+    ragCard.classList.add("sample-reveal");
+    appendSampleLatency(ragCard, sampleCase.rag.latency_ms);
+    pendingCard.replaceWith(ragCard);
+    return;
+  }
+  const context = buildRetrievedContext(sampleCase.rag.sources);
+  if (context) {
+    context.open = false;
+    context.classList.add("sample-reveal");
+    samplePlayback.comparison?.appendChild(context);
+  }
+  samplePlayback.comparison?.appendChild(buildSampleEvaluation());
+  refreshToolbar();
+}
+
+function appendSampleLatency(card, latencyMs) {
+  const meta = document.createElement("span");
+  meta.className = "sample-latency";
+  meta.textContent = `Recorded latency ${(latencyMs / 1000).toFixed(2)}s`;
+  card.querySelector(".compare-label")?.appendChild(meta);
+}
+
+function buildSampleEvaluation() {
+  const { metrics } = SAMPLE_RUN.case;
+  const { summary } = SAMPLE_RUN;
+  const section = document.createElement("section");
+  section.className = "sample-evaluation sample-reveal";
+  section.innerHTML = `
+    <div class="sample-evaluation-head">
+      <div>
+        <span class="sample-eyebrow">Evaluation</span>
+        <h2>Grounded where the baseline stalled</h2>
+      </div>
+      <span class="sample-check-badge">Checks passed</span>
+    </div>
+    <div class="sample-checks">
+      <span>${metrics.citation_pass ? "✓" : "—"} valid citations</span>
+      <span>${metrics.expected_source_pass ? "✓" : "—"} expected source</span>
+      <span>${metrics.retrieved_count} retrieved chunks</span>
+      <span>${(metrics.max_similarity * 100).toFixed(1)}% top similarity</span>
+    </div>
+    <div class="sample-benchmark-summary" role="group" aria-label="Full benchmark summary">
+      <div><strong>${summary.question_count}</strong><span>fixed prompts</span></div>
+      <div><strong>${Math.round(summary.citation_pass_rate * 100)}%</strong><span>citation pass</span></div>
+      <div><strong>${Math.round(summary.expected_source_pass_rate * 100)}%</strong><span>source pass</span></div>
+      <div><strong>${(summary.average_rag_latency_ms / 1000).toFixed(2)}s</strong><span>avg RAG latency</span></div>
+      <div><strong>$${summary.total_cost_usd.toFixed(4)}</strong><span>full run cost</span></div>
+    </div>
+    <div class="sample-evaluation-foot">
+      <span>Structural checks from the 15-question benchmark.</span>
+      <button type="button" data-sample-action="configure">Run with your own key</button>
+    </div>
+  `;
+  return section;
+}
+
 function renderHero() {
   chatEl.innerHTML = `
     <div class="hero" id="placeholder">
       <h1 class="hero-title">Xenophon</h1>
       <p class="hero-tagline">Reflective RAG assistant with an inspectable agent pipeline</p>
       <p class="hero-hint">Run Standard, RAG, Agent, or Compare mode to inspect retrieval quality, cited sources, token usage, and grounding checks.</p>
+      <div class="hero-actions">
+        <button type="button" class="sample-run-cta" id="view-sample-run">View sample run</button>
+        <span>No API key required</span>
+      </div>
     </div>
   `;
 }
@@ -758,6 +1056,7 @@ resetAllBtn.addEventListener("click", () => {
 });
 
 function resetConversation() {
+  stopSamplePlayback();
   resetConversationState(state);
   renderHero();
   refreshToolbar();
@@ -805,7 +1104,7 @@ function renderCompareResult({ standardResult, ragResult }) {
   chatEl.appendChild(wrap);
 }
 
-function buildCompareCard(label, reply, usage, isRag = false) {
+function buildCompareCard(label, reply, usage, isRag = false, model = modelSelect.value) {
   const card = document.createElement("section");
   card.className = `compare-card${isRag ? " rag" : ""}`;
 
@@ -824,7 +1123,7 @@ function buildCompareCard(label, reply, usage, isRag = false) {
     const outTok = (usage.total_tokens || 0) - inTok;
     const reasoningTok = usage.completion_tokens_details?.reasoning_tokens || 0;
     const cachedTok = usage.prompt_tokens_details?.cached_tokens || 0;
-    appendMeta(card, inTok, outTok, reasoningTok, cachedTok, estimateCost(usage, modelSelect.value));
+    appendMeta(card, inTok, outTok, reasoningTok, cachedTok, estimateCost(usage, model));
   }
   appendActionChips(card, reply, { allowRegenerate: false });
   return card;

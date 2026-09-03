@@ -1,0 +1,81 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
+  <title id="title">Xenophon — No RAG compared with grounded RAG</title>
+  <desc id="desc">A horizontal portfolio cover comparing an uncited No RAG response with a grounded RAG response, followed by three retrieved sources and benchmark results.</desc>
+
+  <rect width="1200" height="630" fill="#f8f4e9"/>
+  <path d="M60 42h1080" stroke="#c7ad72"/>
+
+  <text x="60" y="76" fill="#6f520f" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="700" letter-spacing="2.2">REFLECTIVE RAG ASSISTANT</text>
+  <text x="60" y="126" fill="#292313" font-family="Georgia, Times New Roman, serif" font-size="50" font-weight="700" letter-spacing="-1.4">Xenophon</text>
+  <text x="60" y="158" fill="#756b55" font-family="Arial, Helvetica, sans-serif" font-size="17">See what retrieval changes — then inspect the evidence.</text>
+
+  <g transform="translate(945 70)">
+    <rect width="195" height="46" rx="23" fill="#efe7d2" stroke="#c7ad72"/>
+    <circle cx="23" cy="23" r="5" fill="#9f7a22"/>
+    <text x="39" y="28" fill="#6f520f" font-family="Arial, Helvetica, sans-serif" font-size="13" font-weight="700" letter-spacing="1.2">COMPARE · Q10</text>
+  </g>
+
+  <text x="60" y="199" fill="#756b55" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="700" letter-spacing="1.5">FIXED EVALUATION PROMPT</text>
+  <text x="60" y="229" fill="#292313" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="600">How does dropout regularize a neural network?</text>
+
+  <g transform="translate(60 256)">
+    <rect width="520" height="200" rx="14" fill="#fffdf7" stroke="#c7ad72"/>
+    <text x="24" y="36" fill="#756b55" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="700" letter-spacing="1.6">NO RAG</text>
+    <text x="431" y="36" fill="#756b55" font-family="Menlo, Consolas, monospace" font-size="11">6.86s</text>
+    <line x1="24" y1="54" x2="496" y2="54" stroke="#e2d5b8"/>
+    <text x="24" y="86" fill="#292313" font-family="Arial, Helvetica, sans-serif" font-size="17" font-weight="600">Asks another question.</text>
+    <text x="24" y="115" fill="#756b55" font-family="Arial, Helvetica, sans-serif" font-size="15">“What exactly are you trying to understand</text>
+    <text x="24" y="138" fill="#756b55" font-family="Arial, Helvetica, sans-serif" font-size="15">about dropout and regularization?”</text>
+    <g transform="translate(24 162)">
+      <circle cx="6" cy="6" r="6" fill="#d9cdb1"/>
+      <text x="19" y="11" fill="#756b55" font-family="Menlo, Consolas, monospace" font-size="11">0 sources · no grounding signal</text>
+    </g>
+  </g>
+
+  <g transform="translate(620 256)">
+    <rect width="520" height="200" rx="14" fill="#fffaf0" stroke="#9f7a22" stroke-width="2"/>
+    <text x="24" y="36" fill="#6f520f" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="700" letter-spacing="1.6">GROUNDED RAG</text>
+    <text x="431" y="36" fill="#756b55" font-family="Menlo, Consolas, monospace" font-size="11">3.82s</text>
+    <line x1="24" y1="54" x2="496" y2="54" stroke="#e2d5b8"/>
+    <text x="24" y="86" fill="#292313" font-family="Arial, Helvetica, sans-serif" font-size="17" font-weight="600">Answers from retrieved evidence.</text>
+    <text x="24" y="115" fill="#292313" font-family="Arial, Helvetica, sans-serif" font-size="15">Dropout removes activations during training,</text>
+    <text x="24" y="138" fill="#292313" font-family="Arial, Helvetica, sans-serif" font-size="15">reducing fragile co-adaptations [1, 2]. For images,</text>
+    <text x="24" y="161" fill="#292313" font-family="Arial, Helvetica, sans-serif" font-size="15">entire channels can be dropped [3].</text>
+    <g transform="translate(352 167)">
+      <rect width="144" height="24" rx="12" fill="#e5efe4" stroke="#afc8ae"/>
+      <circle cx="15" cy="12" r="4" fill="#2f6f42"/>
+      <text x="27" y="16" fill="#2f6f42" font-family="Arial, Helvetica, sans-serif" font-size="10" font-weight="700" letter-spacing=".8">CITATIONS VALID</text>
+    </g>
+  </g>
+
+  <g transform="translate(60 493)">
+    <text x="0" y="0" fill="#756b55" font-family="Arial, Helvetica, sans-serif" font-size="11" font-weight="700" letter-spacing="1.4">TOP RETRIEVED SOURCES</text>
+
+    <g transform="translate(0 18)">
+      <rect width="212" height="68" rx="10" fill="#fffdf7" stroke="#e2d5b8"/>
+      <text x="15" y="27" fill="#6f520f" font-family="Arial, Helvetica, sans-serif" font-size="13" font-weight="700">[1] lbdl · p. 77</text>
+      <text x="15" y="49" fill="#756b55" font-family="Menlo, Consolas, monospace" font-size="11">similarity 0.89</text>
+    </g>
+    <g transform="translate(224 18)">
+      <rect width="212" height="68" rx="10" fill="#fffdf7" stroke="#e2d5b8"/>
+      <text x="15" y="27" fill="#6f520f" font-family="Arial, Helvetica, sans-serif" font-size="13" font-weight="700">[2] lbdl · p. 78</text>
+      <text x="15" y="49" fill="#756b55" font-family="Menlo, Consolas, monospace" font-size="11">similarity 0.90</text>
+    </g>
+    <g transform="translate(448 18)">
+      <rect width="212" height="68" rx="10" fill="#fffdf7" stroke="#e2d5b8"/>
+      <text x="15" y="27" fill="#6f520f" font-family="Arial, Helvetica, sans-serif" font-size="13" font-weight="700">[3] lbdl · p. 79</text>
+      <text x="15" y="49" fill="#756b55" font-family="Menlo, Consolas, monospace" font-size="11">similarity 0.87</text>
+    </g>
+  </g>
+
+  <g transform="translate(752 493)">
+    <rect width="388" height="86" rx="12" fill="#292313"/>
+    <text x="20" y="25" fill="#d8bd7e" font-family="Arial, Helvetica, sans-serif" font-size="11" font-weight="700" letter-spacing="1.4">BENCHMARK · 15 FIXED PROMPTS</text>
+    <text x="20" y="61" fill="#fffdf7" font-family="Georgia, Times New Roman, serif" font-size="31" font-weight="700">100%</text>
+    <text x="130" y="47" fill="#fffdf7" font-family="Arial, Helvetica, sans-serif" font-size="13" font-weight="600">citation pass</text>
+    <text x="130" y="66" fill="#cfc7b5" font-family="Arial, Helvetica, sans-serif" font-size="12">100% expected-source pass</text>
+  </g>
+
+  <text x="60" y="610" fill="#756b55" font-family="Menlo, Consolas, monospace" font-size="10">RECORDED JUL 2026 · GEMINI 2.5 FLASH</text>
+  <text x="1140" y="610" fill="#6f520f" text-anchor="end" font-family="Menlo, Consolas, monospace" font-size="10">xenophon-rag-agent</text>
+</svg>

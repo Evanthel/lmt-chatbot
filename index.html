@@ -8,6 +8,34 @@
       name="description"
       content="Xenophon is a portfolio AI assistant with RAG, source citations, and an inspectable agent pipeline."
     />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://evanthel.github.io/xenophon-rag-agent/" />
+    <meta property="og:title" content="Xenophon — Inspectable RAG assistant" />
+    <meta
+      property="og:description"
+      content="Compare direct and retrieval-grounded answers, inspect source citations, and replay a benchmark without an API key."
+    />
+    <meta
+      property="og:image"
+      content="https://evanthel.github.io/xenophon-rag-agent/docs/portfolio/xenophon-cover.png"
+    />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta
+      property="og:image:alt"
+      content="Xenophon comparison of an ungrounded No RAG answer and a source-grounded RAG answer with benchmark results."
+    />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Xenophon — Inspectable RAG assistant" />
+    <meta
+      name="twitter:description"
+      content="Compare direct and retrieval-grounded answers, inspect citations, and replay a benchmark without an API key."
+    />
+    <meta
+      name="twitter:image"
+      content="https://evanthel.github.io/xenophon-rag-agent/docs/portfolio/xenophon-cover.png"
+    />
+    <link rel="canonical" href="https://evanthel.github.io/xenophon-rag-agent/" />
     <script src="https://cdn.jsdelivr.net/npm/marked@15/marked.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
     <link rel="stylesheet" href="./styles/main.css" />
@@ -177,6 +205,7 @@ Preset use cases (temperature · top-p):
         </svg>
       </button>
       <div class="spacer"></div>
+      <div class="sample-topbar" id="sample-topbar" hidden>Recorded benchmark · no API calls</div>
       <div class="stats" id="stats" aria-live="polite" title="Running totals for this conversation">
         <span id="stat-msgs">0</span>&nbsp;<span class="label">msgs</span><span class="sep">·</span><span id="stat-in">0</span>&nbsp;<span class="label">tokens in</span><span class="sep" id="stat-cached-sep" hidden>·</span><span class="cached" id="stat-cached" hidden>0 cached</span><span class="sep">·</span><span id="stat-out">0</span>&nbsp;<span class="label">tokens out</span><span class="sep">·</span><span class="cost" id="stat-cost">~$0.0000</span>&nbsp;<span class="label">total</span>
       </div>
@@ -188,6 +217,10 @@ Preset use cases (temperature · top-p):
           <h1 class="hero-title">Xenophon</h1>
           <p class="hero-tagline">Reflective RAG assistant with an inspectable agent pipeline</p>
           <p class="hero-hint">Run Standard, RAG, Agent, or Compare mode to inspect retrieval quality, cited sources, token usage, and grounding checks.</p>
+          <div class="hero-actions">
+            <button type="button" class="sample-run-cta" id="view-sample-run">View sample run</button>
+            <span>No API key required</span>
+          </div>
         </div>
       </main>
 

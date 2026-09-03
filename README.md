@@ -17,7 +17,8 @@ The portfolio work in this repository is the Xenophon layer on top of that base:
 - Agent pipeline with planning, query rewriting, retrieval, answering, verification, and retry.
 - Compare mode for side-by-side direct LLM vs RAG evaluation.
 - MCP stdio server exposing the knowledge base to agent clients.
-- Repeatable benchmark pack with fixed questions, cost/latency/citation metrics, and a real Compare-mode screenshot.
+- Repeatable benchmark pack with fixed questions, cost/latency/citation metrics, a shareable cover, and real Compare-mode captures.
+- API-key-free `View sample run` playback of a recorded Compare benchmark case.
 - CI, TypeScript tests, Python smoke checks, security guards, and frontend/backend modularization.
 
 ## Portfolio Highlights
@@ -37,13 +38,13 @@ The portfolio work in this repository is the Xenophon layer on top of that base:
 - [Architecture and RAG/Agent flow](docs/portfolio/README.md#flow-diagram)
 - [15 fixed evaluation questions](docs/portfolio/evaluation-questions.json)
 - [Benchmark results](docs/portfolio/results/benchmark-2026-07-16.md) and [methodology](docs/portfolio/README.md#benchmark-methodology)
-- [Real Compare-mode capture](docs/portfolio/screenshots/compare-mode-deep-learning.png), showing the direct and retrieval-grounded answers alongside cited evidence
+- [Real Compare-mode captures](docs/portfolio/screenshots/compare-mode-dropout.png), showing direct and retrieval-grounded answers alongside cited evidence
 
-<a href="docs/portfolio/screenshots/compare-mode-deep-learning.png">
+<a href="docs/portfolio/xenophon-cover.png">
   <img
-    src="docs/portfolio/screenshots/compare-mode-deep-learning.png"
-    alt="Xenophon Compare mode: direct answer versus a RAG answer with citations and retrieved context"
-    height="900"
+    src="docs/portfolio/xenophon-cover.png"
+    alt="Xenophon cover: No RAG versus grounded RAG, three sources, and benchmark result"
+    width="1200"
   >
 </a>
 
@@ -55,6 +56,8 @@ The browser app supports four modes:
 - `RAG`: retrieves matching chunks from Supabase/pgvector and answers with source citations.
 - `Agent`: plans the request, rewrites retrieval queries, retrieves evidence, answers, verifies grounding, and retries retrieval when evidence is weak.
 - `Compare`: runs direct and RAG paths side by side so the retrieval delta is visible.
+
+The empty state also offers `View sample run`: a read-only, staged playback of a recorded benchmark case with its retrieved sources and evaluation metrics. It runs from a small local fixture, makes no OpenRouter or Supabase requests, and needs no API key.
 
 The `Agent` mode renders a pipeline trace under each reply: planner intent, retrieval goal, generated queries, retry queries, retrieved count, cited sources, and grounding status.
 

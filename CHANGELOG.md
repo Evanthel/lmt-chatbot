@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Added a compact 1200×630 Compare cover and Open Graph/Twitter sharing metadata for the hosted demo.
+- Added an API-key-free `View sample run` flow with recorded Compare answers, retrieval playback, source inspection, and benchmark checks.
 - Added a portfolio evidence pack with a flow diagram, Compare-mode preview, fixed benchmark questions, and a live benchmark runner.
 - Repositioned README and UI copy around a portfolio-ready product narrative.
 - Split the static frontend into `index.html`, `styles/main.css`, and focused modules under `src/`.
